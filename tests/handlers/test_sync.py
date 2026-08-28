@@ -146,7 +146,13 @@ class SyncTestCase(tests.unittest.HomeserverTestCase):
         )
         self.assertEqual(e.value.errcode, Codes.RESOURCE_LIMIT_EXCEEDED)
 
-    def test_unknown_room_version(self) -> None:
+    @parameterized.expand(
+        [
+            (RoomVersions.V11.identifier,),
+            (RoomVersions.V12.identifier,),
+        ]
+    )
+    def test_unknown_room_version(self, room_version: str) -> None:
         """
         A room with an unknown room version should not break sync (and should be excluded).
         """
@@ -169,10 +175,14 @@ class SyncTestCase(tests.unittest.HomeserverTestCase):
         )
 
         # Create a room as the user.
-        joined_room = self.helper.create_room_as(user, tok=tok)
+        joined_room = self.helper.create_room_as(
+            user, room_version=room_version, tok=tok
+        )
 
         # Invite the user to the room as someone else.
-        invite_room = self.helper.create_room_as(inviter, tok=inviter_tok)
+        invite_room = self.helper.create_room_as(
+            inviter, room_version=room_version, tok=inviter_tok
+        )
         self.helper.invite(invite_room, targ=user, tok=inviter_tok)
 
         knock_room = self.helper.create_room_as(
